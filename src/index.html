@@ -22,6 +22,7 @@
   <script async="async" src="https://www.googletagservices.com/tag/js/gpt.js"></script>
   
   <script>
+    let adCount = 1;
     var googletag = googletag || {};
     googletag.cmd = googletag.cmd || [];
     
@@ -31,8 +32,17 @@
         .addSize([1000, 0], [728, 90])
         .build();
 
+      var bannerMapping = googletag.sizeMapping()
+        .addSize([0, 0], [300, 250])
+        .addSize([0, 0], [320, 50])
+        .build();
+
       googletag.defineSlot('/18190176/AdThrive_Header_1/test', [[320, 50]], 'header-ad')
         .defineSizeMapping(headerMapping)
+        .addService(googletag.pubads());
+
+      googletag.defineSlot(`/18190176/AdThrive_Content_${adCount}/test`,[[300, 250], [320,50]], 'banner-ad')
+        .defineSizeMapping(bannerMapping)
         .addService(googletag.pubads());
 
       googletag.pubads().setTargeting('siteId', 'test');
@@ -343,10 +353,20 @@
     let paragraphs = document.getElementsByTagName("p");
     for(var i=0; i < paragraphs.length; i++){
       let adDiv = document.createElement('div');
-      adDiv.id = 'adDiv';
+      adDiv.id = 'banner-ad';
+      adDiv.class = 'ad';
+      let adScript = document.createElement('script');
+      adScript.setAttribute('type', 'text/javascript');
+      adScript.innerHTML = `googletag.cmd.push(function() {
+          googletag.display('banner-ad');
+        });`
+
       if(paragraphs[i].children.length === 0 || paragraphs[i].children[0].tagName !== 'IMG') {
         console.log(true)
+        adDiv.appendChild(adScript);
         paragraphs[i].parentNode.insertBefore(adDiv, paragraphs[i].nextSibling)
+        adCount++;
+        console.log(adCount)
       }
       // console.log(paragraphs[i])
     }
