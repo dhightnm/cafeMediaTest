@@ -3,7 +3,7 @@ let paragraphs = document.getElementsByTagName("p");
     
 googletag.cmd.push(() => {
 // Starting at 6 because that is the first paragraph in the main article
-  for(var i=6; i < paragraphs.length; paragraphs.length % 9){
+  for(var i=6; i < paragraphs.length; i += Math.floor(paragraphs.length / 9)){
     let IS_NOT_IMAGE = paragraphs[i].children.length === 0 || paragraphs[i].children[0].tagName !== 'IMG'
     if(IS_NOT_IMAGE) {
 
@@ -12,7 +12,7 @@ googletag.cmd.push(() => {
       .addSize([1000, 0], [320, 50])
       .build();
 
-      googletag.defineSlot(`/18190176/AdThrive_Content_${adCount}/test`,[[300, 250], [320,50]], `banner-ad${adCount}`)
+      let bannerAd = googletag.defineSlot(`/18190176/AdThrive_Content_${adCount}/test`,[[300, 250], [320,50]], `banner-ad${adCount}`)
       .defineSizeMapping(bannerMapping)
       .setTargeting('test', 'lazyload')
       .addService(googletag.pubads());
@@ -31,7 +31,22 @@ googletag.cmd.push(() => {
       adDiv.appendChild(adScript);
       paragraphs[i].parentNode.insertBefore(adDiv, paragraphs[i].nextSibling)
       adCount++;
-      console.log(adCount)
+
+      googletag.pubads().addEventListener('slotVisibilityChanged',
+        function(event) {
+          var slot = event.slot;
+          console.group(
+              'Visibility of slot', slot.getSlotElementId(), 'changed.');
+
+          // Log details of the event.
+          console.log('Visible area:', event.inViewPercentage + '%');
+          console.groupEnd();
+
+          if (slot === bannerAd && event.inViewPercentage <= 50) {
+            googletag.destroySlots([bannerAd]);
+          }
+        }
+      ); 
     }  
   }
 });
