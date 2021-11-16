@@ -38,7 +38,10 @@
 
       googletag.pubads().setTargeting('siteId', 'test');
       googletag.pubads().enableSingleRequest();
-      googletag.pubads().enableLazyLoad();
+      googletag.pubads().enableLazyLoad({
+        fetchMarginPercent: 50,
+        renderMarginPercent: 50
+      });
       
       let headerDiv = document.getElementById('header-ad')
       googletag.pubads().addEventListener('impressionViewable',
@@ -66,7 +69,7 @@
 </head>
 <body>
   <div class="wrapper">
-    <div id="header-ad" class="ad" style="position: fixed;">
+    <div id="header-ad" class="ad" style="position: fixed">
       <script type="text/javascript">
         googletag.cmd.push(() => {
           googletag.display('header-ad');
@@ -361,38 +364,60 @@
       </p>
     </article>
   </div>
-  <script>
+  <script >
     let adCount = 1;
-    let paragraphs = document.getElementsByTagName("p");
-    googletag.cmd.push(() => {
-    for(var i=6; i < paragraphs.length; i++){
-      if(paragraphs[i].children.length === 0 || paragraphs[i].children[0].tagName !== 'IMG') {
+let paragraphs = document.getElementsByTagName("p");
+    
+googletag.cmd.push(() => {
+// Starting at 6 because that is the first paragraph in the main article
+  for(var i=6; i < paragraphs.length; i += Math.floor(paragraphs.length / 9)){
+    let IS_NOT_IMAGE = paragraphs[i].children.length === 0 || paragraphs[i].children[0].tagName !== 'IMG'
+    if(IS_NOT_IMAGE) {
 
-        var bannerMapping = googletag.sizeMapping()
-        .addSize([0, 0], [300, 250])
-        .addSize([1000, 0], [320, 50])
-        .build();
-      
-        googletag.defineSlot(`/18190176/AdThrive_Content_${adCount}/test`,[[300, 250], [320,50]], `banner-ad${adCount}`)
-        .defineSizeMapping(bannerMapping)
-        .setTargeting('test', 'lazyload')
-        .addService(googletag.pubads());
+      var bannerMapping = googletag.sizeMapping()
+      .addSize([0, 0], [300, 250])
+      .addSize([1000, 0], [320, 50])
+      .build();
 
-        let adDiv = document.createElement('div');
-        adDiv.id = `banner-ad${adCount}`;
-        adDiv.className = 'ad';
-        let adScript = document.createElement('script');
-        adScript.setAttribute('type', 'text/javascript');
-        adScript.async = true;
-        adScript.innerHTML = `googletag.cmd.push(function() {
-            googletag.display('banner-ad${adCount}');
-          });`
-        adDiv.appendChild(adScript);
-        paragraphs[i].parentNode.insertBefore(adDiv, paragraphs[i].nextSibling)
-        adCount++;
-        }  
+      let bannerAd = googletag.defineSlot(`/18190176/AdThrive_Content_${adCount}/test`,[[300, 250], [320,50]], `banner-ad${adCount}`)
+      .defineSizeMapping(bannerMapping)
+      .setTargeting('test', 'lazyload')
+      .addService(googletag.pubads());
+
+    // Creates the adDiv with the display script and append it to each eligable 
+    // paragraph tag.
+      let adDiv = document.createElement('div');
+      adDiv.id = `banner-ad${adCount}`;
+      adDiv.className = 'ad';
+      let adScript = document.createElement('script');
+      adScript.setAttribute('type', 'text/javascript');
+      adScript.async = true;
+      adScript.innerHTML = `googletag.cmd.push(function() {
+          googletag.display('banner-ad${adCount}');
+        });`
+      adDiv.appendChild(adScript);
+      paragraphs[i].parentNode.insertBefore(adDiv, paragraphs[i].nextSibling)
+      adCount++;
+      console.log(adCount)
+      googletag.pubads().addEventListener('slotVisibilityChanged',
+    function(event) {
+      var slot = event.slot;
+      console.group(
+          'Visibility of slot', slot.getSlotElementId(), 'changed.');
+
+      // Log details of the event.
+      console.log('Visible area:', event.inViewPercentage + '%');
+      console.groupEnd();
+
+      if (slot === bannerAd && event.inViewPercentage <= 50) {
+        googletag.destroySlots([bannerAd]);
       }
-  });
+    }
+); 
+    } 
+    
+  }
+});
   </script>
 </body>
 </html>
